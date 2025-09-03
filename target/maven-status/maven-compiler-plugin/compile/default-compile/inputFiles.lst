@@ -1,1 +1,9 @@
 /Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/LetsPlayApplication.java
+/Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/config/SecurityConfig.java
+/Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/model/Product.java
+/Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/model/User.java
+/Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/repository/ProductRepository.java
+/Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/repository/UserRepository.java
+/Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/service/JwtService.java
+/Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/service/ProductService.java
+/Users/mohammad.kheirkhah/Desktop/lets-play/src/main/java/com/gritlab/lets_play/service/UserService.java

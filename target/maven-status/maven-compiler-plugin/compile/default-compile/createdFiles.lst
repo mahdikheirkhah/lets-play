@@ -1,1 +1,6 @@
+com/gritlab/lets_play/model/Product.class
 com/gritlab/lets_play/LetsPlayApplication.class
+com/gritlab/lets_play/model/User.class
+com/gritlab/lets_play/config/SecurityConfig.class
+com/gritlab/lets_play/repository/ProductRepository.class
+com/gritlab/lets_play/repository/UserRepository.class
