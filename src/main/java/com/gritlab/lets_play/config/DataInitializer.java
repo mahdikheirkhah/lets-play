@@ -17,12 +17,14 @@ import java.util.List;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initDatabase(UserService userService,
+    CommandLineRunner initDatabase(UserRepository userRepository,
+                                    ProductRepository productRepository,
+                                    UserService userService,
                                    ProductService productService) { // 1. Inject UserService
         return args -> {
             // Clear old data
-            userService.getUserRepository().deleteAll();
-            productService.getProductRepository().deleteAll();
+           userRepository.deleteAll();
+           productRepository.deleteAll();
 
             // --- Create Users using the UserService ---
             User user1 = new User();
