@@ -44,7 +44,7 @@ public class ProductController {
             @Valid @RequestBody ProductDto productRequest,
             @AuthenticationPrincipal UserDetails userDetails) { // <-- Use @AuthenticationPrincipal
 
-        System.out.println(userDetails);
+        System.out.println(userDetails.getAuthorities());
         // 1. Get the email of the logged-in user from the UserDetails object.
         String userEmail = userDetails.getUsername();
 
