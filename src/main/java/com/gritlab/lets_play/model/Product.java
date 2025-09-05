@@ -24,4 +24,5 @@ public class Product {
     @NotBlank // A product must be linked to a user
     @Field("userId")
     public String userId;
+
 }

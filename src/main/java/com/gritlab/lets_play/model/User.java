@@ -25,5 +25,6 @@ public class User {
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
 
-    private String role;
+    private Role role;
+
 }

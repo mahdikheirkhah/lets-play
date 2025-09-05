@@ -1,0 +1,32 @@
+package com.gritlab.lets_play.controller;
+
+import com.gritlab.lets_play.model.Product;
+import com.gritlab.lets_play.model.ProductDto;
+import com.gritlab.lets_play.service.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+    @Autowired
+    ProductService productService;
+    @GetMapping
+    public ResponseEntity<List<ProductDto>> getAllProducts() {
+        // Hardcoded list for testing
+         List<Product> products = productService.getProducts();
+        List<ProductDto> productDos = products.stream()
+                .map(ProductDto::fromEntity)
+                .toList();
+
+        return ResponseEntity.ok(productDos);
+    }
+
+}
