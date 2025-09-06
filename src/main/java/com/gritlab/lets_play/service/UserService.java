@@ -1,5 +1,6 @@
 package com.gritlab.lets_play.service;
 
+import com.gritlab.lets_play.exception.ResourceNotFoundException;
 import com.gritlab.lets_play.model.Role;
 import com.gritlab.lets_play.model.User;
 import com.gritlab.lets_play.repository.UserRepository;
@@ -58,9 +59,31 @@ public class UserService implements UserDetailsService {
                 Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()))
         );
     }
+
     @PreAuthorize("hasAuthority('ADMIN')")
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public User getUserById(String id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    }
+
+    public User fromEntity(UserDetails userDetails) {
+        // 1. Get the email of the logged-in user from the UserDetails object.
+        String userEmail = userDetails.getUsername();
+
+        // 2. Find the full User entity from the database to get their actual ID.
+        return userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found in database"));
     }
 
 //    public User updateUser(String id, UserUpdateDto userUpdateDto, UserDetails currentUser) {

@@ -3,6 +3,7 @@ package com.gritlab.lets_play.controller;
 import com.gritlab.lets_play.model.Product;
 import com.gritlab.lets_play.model.ProductDto;
 import com.gritlab.lets_play.model.User;
+import com.gritlab.lets_play.model.UserResponse;
 import com.gritlab.lets_play.repository.UserRepository;
 import com.gritlab.lets_play.service.ProductService;
 import com.gritlab.lets_play.service.UserService;
@@ -19,25 +20,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/products")
-public class ProductController {
-    private final ProductService productService;
-    private final UserService userService; // Add this
+@RequestMapping("/api/user")
+public class UserController {
+    private final UserService userService;
+    private final UserRepository userRepository; // Add this
 
     @Autowired
-    public ProductController(ProductService productService, UserService userService) { // Add to constructor
-        this.productService = productService;
-        this.userService = userService; // Add this
+    public UserController(UserService userService, UserRepository userRepository) { // Add to constructor
+        this.userService = userService;
+        this.userRepository = userRepository; // Add this
     }
-    @GetMapping
-    public ResponseEntity<List<ProductDto>> getAllProducts() {
-        // Hardcoded list for testing
-        List<Product> products = productService.getProducts();
-        List<ProductDto> productDos = products.stream()
-                .map(ProductDto::fromEntity)
+
+    @GetMapping("/all")
+    public ResponseEntity<List<UserResponse>> getAllUsers(@AuthenticationPrincipal UserDetails userDetails) {
+        List<User> users = userService.getAllUsers();
+        List<UserResponse> userDos = users.stream()
+                .map(UserResponse::fromEntity)
                 .toList();
 
-        return ResponseEntity.ok(productDos);
+        return ResponseEntity.ok(userDos);
     }
     // Inside ProductController.java
     @PostMapping
@@ -45,10 +46,19 @@ public class ProductController {
             @Valid @RequestBody ProductDto productRequest,
             @AuthenticationPrincipal UserDetails userDetails) { // <-- Use @AuthenticationPrincipal
 
-        User owner = userService.fromEntity(userDetails);
+        // 1. Get the email of the logged-in user from the UserDetails object.
+        String userEmail = userDetails.getUsername();
+
+        // 2. Find the full User entity from the database to get their actual ID.
+        User owner = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
+
+        // 3. Convert the request DTO to a Product entity.
         Product product = ProductDto.toEntity(productRequest);
+        // 4. Call the service with the SECURE, authenticated owner's ID.
         Product savedProduct = productService.registerProduct(product, owner.getId());
 
+        // 5. Convert the result to a DTO for the response.
         ProductDto responseDto = ProductDto.fromEntity(savedProduct);
 
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
