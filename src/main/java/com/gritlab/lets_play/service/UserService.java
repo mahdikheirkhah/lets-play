@@ -4,6 +4,7 @@ import com.gritlab.lets_play.model.Role;
 import com.gritlab.lets_play.model.User;
 import com.gritlab.lets_play.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.List;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -56,4 +58,24 @@ public class UserService implements UserDetailsService {
                 Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()))
         );
     }
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+//    public User updateUser(String id, UserUpdateDto userUpdateDto, UserDetails currentUser) {
+//        // Find the user to be updated
+//        User userToUpdate = userRepository.findById(id).orElseThrow(...);
+//
+//        // Check for permission
+//        boolean isAdmin = currentUser.getAuthorities().stream()
+//                .anyMatch(a -> a.getAuthority().equals(Role.ADMIN.name()));
+//
+//        // The current user's email is their "username"
+//        if (!userToUpdate.getEmail().equals(currentUser.getUsername()) && !isAdmin) {
+//            throw new AccessDeniedException("You do not have permission to update this user.");
+//        }
+//
+//        // ... proceed with update logic
+//    }
 }
