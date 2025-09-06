@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
-@Document(collection = "products") // Corrected from 'collation' to 'collection'
+@Document(collection = "products")
 public class Product {
     @Id
     private String id;
@@ -21,7 +21,7 @@ public class Product {
     @Positive(message = "Price must be a positive value")
     private Double price;
 
-    @NotBlank // A product must be linked to a user
+    @NotBlank
     @Field("userId")
     public String userId;
 

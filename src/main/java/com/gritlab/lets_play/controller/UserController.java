@@ -20,47 +20,50 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/user") // Using plural "users" is more RESTful
 public class UserController {
+
     private final UserService userService;
-    private final UserRepository userRepository; // Add this
 
     @Autowired
-    public UserController(UserService userService, UserRepository userRepository) { // Add to constructor
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.userRepository = userRepository; // Add this
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<UserResponse>> getAllUsers(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<User> users = userService.getAllUsers();
-        List<UserResponse> userDos = users.stream()
+
+        List<UserResponse> userResponses = users.stream()
                 .map(UserResponse::fromEntity)
-                .toList();
+                .collect(Collectors.toList()); // .toList() can be immutable, collect is safer
 
-        return ResponseEntity.ok(userDos);
+        return ResponseEntity.ok(userResponses);
     }
-    // Inside ProductController.java
-    @PostMapping
-    public ResponseEntity<ProductDto> addProduct(
-            @Valid @RequestBody ProductDto productRequest,
-            @AuthenticationPrincipal UserDetails userDetails) { // <-- Use @AuthenticationPrincipal
-
-        // 1. Get the email of the logged-in user from the UserDetails object.
-        String userEmail = userDetails.getUsername();
-
-        // 2. Find the full User entity from the database to get their actual ID.
-        User owner = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
-
-        // 3. Convert the request DTO to a Product entity.
-        Product product = ProductDto.toEntity(productRequest);
-        // 4. Call the service with the SECURE, authenticated owner's ID.
-        Product savedProduct = productService.registerProduct(product, owner.getId());
-
-        // 5. Convert the result to a DTO for the response.
-        ProductDto responseDto = ProductDto.fromEntity(savedProduct);
-
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getSpecificUsersWithID(@Valid @PathVariable String id) {
+        User user = userService.getUserById(id);
+        UserResponse userResponses = UserResponse.fromEntity(user);
+        return ResponseEntity.ok(userResponses);
     }
+
+    @GetMapping("/{email}")
+    public ResponseEntity<UserResponse> getSpecificUsersWithEmail(@Valid @PathVariable String email) {
+        User user = userService.getUserByEmail(email);
+        UserResponse userResponses = UserResponse.fromEntity(user);
+        return ResponseEntity.ok(userResponses);
+    }
+
+    @GetMapping("/myInfo")
+    public ResponseEntity<UserResponse> getUser(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.authUser(userDetails);
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
+    }
+    @PutMapping("/update")
+    public ResponseEntity<UserResponse> updateUser(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.authUser(userDetails);
+
+        return ResponseEntity.ok("information updated: " + UserResponse.fromEntity(user));
+    }
+
 }

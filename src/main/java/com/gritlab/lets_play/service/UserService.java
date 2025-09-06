@@ -3,6 +3,7 @@ package com.gritlab.lets_play.service;
 import com.gritlab.lets_play.exception.ResourceNotFoundException;
 import com.gritlab.lets_play.model.Role;
 import com.gritlab.lets_play.model.User;
+import com.gritlab.lets_play.model.UserUpdateDto;
 import com.gritlab.lets_play.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +14,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.util.Collections;
 import java.util.List;
 
@@ -77,28 +79,32 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
     }
 
-    public User fromEntity(UserDetails userDetails) {
-        // 1. Get the email of the logged-in user from the UserDetails object.
-        String userEmail = userDetails.getUsername();
 
-        // 2. Find the full User entity from the database to get their actual ID.
+    public User authUser(UserDetails userDetails) {
+        String userEmail = userDetails.getUsername();
         return userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found in database"));
     }
 
-//    public User updateUser(String id, UserUpdateDto userUpdateDto, UserDetails currentUser) {
-//        // Find the user to be updated
-//        User userToUpdate = userRepository.findById(id).orElseThrow(...);
-//
-//        // Check for permission
-//        boolean isAdmin = currentUser.getAuthorities().stream()
-//                .anyMatch(a -> a.getAuthority().equals(Role.ADMIN.name()));
-//
-//        // The current user's email is their "username"
-//        if (!userToUpdate.getEmail().equals(currentUser.getUsername()) && !isAdmin) {
-//            throw new AccessDeniedException("You do not have permission to update this user.");
-//        }
-//
-//        // ... proceed with update logic
-//    }
+    public boolean adminCheck(UserDetails currentUser){
+        return currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(Role.ADMIN.name()));
+    }
+
+public User updateUser(User userToUpdate, UserUpdateDto userUpdateDto, UserDetails currentUser) {
+        boolean isAdmin = adminCheck(currentUser);
+
+        if (userToUpdate != null && !userToUpdate.getEmail().equals(currentUser.getUsername()) && !isAdmin) {
+            throw new AccessDeniedException("You do not have permission to update this user.");
+        }
+        if (isAdmin) {
+           if (userUpdateDto == null || userUpdateDto.getEmail().isBlank() || userRepository.findByEmail(userUpdateDto.getEmail()).isEmpty()){
+               throw new ResourceNotFoundException("Admin please provide a related email to find the specific user");
+           }
+
+        }
+
+
+        // ... proceed with update logic
+    }
 }

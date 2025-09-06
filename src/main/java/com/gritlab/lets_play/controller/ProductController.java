@@ -45,7 +45,7 @@ public class ProductController {
             @Valid @RequestBody ProductDto productRequest,
             @AuthenticationPrincipal UserDetails userDetails) { // <-- Use @AuthenticationPrincipal
 
-        User owner = userService.fromEntity(userDetails);
+        User owner = userService.authUser(userDetails);
         Product product = ProductDto.toEntity(productRequest);
         Product savedProduct = productService.registerProduct(product, owner.getId());
 
