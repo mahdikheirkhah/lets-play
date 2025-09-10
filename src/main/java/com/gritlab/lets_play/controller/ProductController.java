@@ -75,5 +75,27 @@ public class ProductController {
         Product product = productService.updateProductByAdmin(id, productUpdateByAdminDto);
         return ResponseEntity.ok(ProductDto.fromEntity(product));
     }
+    // Endpoint for a user to delete their own product
+    // DELETE /api/products/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User currentUser = userService.authUser(userDetails);
+        productService.deleteProduct(id, currentUser);
+
+        // Return 204 No Content on successful deletion
+        return ResponseEntity.noContent().build();
+    }
+
+    // Endpoint for an admin to delete any product
+    // DELETE /api/products/admin/{id}
+    @DeleteMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deleteProductByAdmin(@PathVariable String id) {
+        productService.deleteProductByAdmin(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }

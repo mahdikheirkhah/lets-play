@@ -73,5 +73,26 @@ public class UserController {
         User updatedUser = userService.updateUserByAdmin(id, userUpdateByAdminDto);
         return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
     }
+    /**
+     * Endpoint for a user to delete their own account.
+     */
+    // DELETE /api/users/me
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteCurrentUserAccount(@AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userService.authUser(userDetails); // Assuming you have this helper
+        userService.deleteCurrentUser(currentUser);
+        return ResponseEntity.noContent().build(); // Return 204 No Content
+    }
+
+    /**
+     * Endpoint for an admin to delete any user account.
+     */
+    // DELETE /api/users/admin/{id}
+    @DeleteMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deleteUserByAdmin(@PathVariable String id) {
+        userService.deleteUserByAdmin(id);
+        return ResponseEntity.noContent().build(); // Return 204 No Content
+    }
 
 }

@@ -1,11 +1,13 @@
 package com.gritlab.lets_play.service;
 
 import com.gritlab.lets_play.exception.BadRequestException;
+import com.gritlab.lets_play.exception.ResourceNotFoundException;
 import com.gritlab.lets_play.model.*;
 import com.gritlab.lets_play.repository.UserRepository;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import com.gritlab.lets_play.repository.ProductRepository;
 
@@ -71,5 +73,21 @@ public class ProductService {
         }
 
         return productRepository.save(product);
+    }
+    public void deleteProduct(String productId, User currentUser) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + productId));
+        if (!product.getUserId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You do not have permission to delete this product.");
+        }
+        productRepository.deleteById(productId);
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void deleteProductByAdmin(String productId) {
+        if (!productRepository.existsById(productId)) {
+            throw new ResourceNotFoundException("Product not found with ID: " + productId);
+        }
+        productRepository.deleteById(productId);
     }
 }

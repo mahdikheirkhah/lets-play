@@ -2,10 +2,8 @@ package com.gritlab.lets_play.service;
 
 import com.gritlab.lets_play.exception.ResourceNotFoundException;
 import com.gritlab.lets_play.exception.BadRequestException;
-import com.gritlab.lets_play.model.Role;
-import com.gritlab.lets_play.model.User;
-import com.gritlab.lets_play.model.UserUpdateByAdminDto;
-import com.gritlab.lets_play.model.UserUpdateDto;
+import com.gritlab.lets_play.model.*;
+import com.gritlab.lets_play.repository.ProductRepository;
 import com.gritlab.lets_play.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,12 +22,13 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final ProductRepository productRepository;
     // Dependencies are injected through the constructor
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, ProductRepository productRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.productRepository = productRepository;
     }
 
     public User registerUser(User user) {
@@ -142,5 +141,38 @@ public class UserService implements UserDetailsService {
         }
 
         return userRepository.save(userToUpdate);
+    }
+
+    /**
+     * Deletes the currently authenticated user and all of their products.
+     */
+    public void deleteCurrentUser(User currentUser) {
+        // delete all products associated with this user
+        List<Product> productsToDelete = productRepository.findByUserId(currentUser.getId());
+        if (!productsToDelete.isEmpty()) {
+            productRepository.deleteAll(productsToDelete);
+        }
+
+        userRepository.deleteById(currentUser.getId());
+    }
+
+    /**
+     * Deletes a user by their ID, intended for admin use.
+     * Also deletes all products owned by that user.
+     */
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void deleteUserByAdmin(String userIdToDelete) {
+        // Verify user exists before proceeding
+        if (!userRepository.existsById(userIdToDelete)) {
+            throw new ResourceNotFoundException("User not found with ID: " + userIdToDelete);
+        }
+
+        // Delete associated products
+        List<Product> productsToDelete = productRepository.findByUserId(userIdToDelete);
+        if (!productsToDelete.isEmpty()) {
+            productRepository.deleteAll(productsToDelete);
+        }
+
+        userRepository.deleteById(userIdToDelete);
     }
 }
