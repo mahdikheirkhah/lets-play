@@ -1,0 +1,4 @@
+com\gritlab\lets_play\service\UserServiceTest.class
+com\gritlab\lets_play\controller\ProductControllerTest.class
+com\gritlab\lets_play\SecurityTest.class
+com\gritlab\lets_play\LetsPlayApplicationTests.class

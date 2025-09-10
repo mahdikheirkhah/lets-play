@@ -28,7 +28,7 @@ public class ProductController {
         this.productService = productService;
         this.userService = userService; // Add this
     }
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {
         List<Product> products = productService.getProducts();
         List<ProductDto> productDos = products.stream()
@@ -37,7 +37,7 @@ public class ProductController {
 
         return ResponseEntity.ok(productDos);
     }
-    @GetMapping("/myProduct")
+    @GetMapping("/me")
     public ResponseEntity<List<ProductDto>> getAllMyProducts(@AuthenticationPrincipal UserDetails userDetails) {
         User owner = userService.authUser(userDetails);
         List<Product> products = productService.getProducts(owner.getId());
@@ -47,7 +47,7 @@ public class ProductController {
 
         return ResponseEntity.ok(productDos);
     }
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<ProductDto> addProduct(
             @Valid @RequestBody ProductDto productRequest,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -60,7 +60,7 @@ public class ProductController {
 
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
-    @PutMapping("/product/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ProductDto> updateProduct(@PathVariable String id,@Valid @RequestBody ProductUpdateDto productUpdateDto, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.authUser(userDetails);
         Product product = productService.updateProduct(id, productUpdateDto, user);
