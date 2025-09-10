@@ -28,7 +28,8 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/all")
+    @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<User> users = userService.getAllUsers();
 
@@ -39,6 +40,7 @@ public class UserController {
         return ResponseEntity.ok(userResponses);
     }
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<UserResponse> getSpecificUsersWithID(@Valid @PathVariable String id) {
         User user = userService.getUserById(id);
         UserResponse userResponses = UserResponse.fromEntity(user);
@@ -46,13 +48,14 @@ public class UserController {
     }
 
     @GetMapping("/{email}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<UserResponse> getSpecificUsersWithEmail(@Valid @PathVariable String email) {
         User user = userService.getUserByEmail(email);
         UserResponse userResponses = UserResponse.fromEntity(user);
         return ResponseEntity.ok(userResponses);
     }
 
-    @GetMapping("/myInfo")
+    @GetMapping("/me")
     public ResponseEntity<UserResponse> getUser(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.authUser(userDetails);
         return ResponseEntity.ok(UserResponse.fromEntity(user));
