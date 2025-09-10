@@ -1,9 +1,6 @@
 package com.gritlab.lets_play.controller;
 
-import com.gritlab.lets_play.model.Product;
-import com.gritlab.lets_play.model.ProductDto;
-import com.gritlab.lets_play.model.User;
-import com.gritlab.lets_play.model.UserResponse;
+import com.gritlab.lets_play.model.*;
 import com.gritlab.lets_play.repository.UserRepository;
 import com.gritlab.lets_play.service.ProductService;
 import com.gritlab.lets_play.service.UserService;
@@ -11,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -59,11 +57,21 @@ public class UserController {
         User user = userService.authUser(userDetails);
         return ResponseEntity.ok(UserResponse.fromEntity(user));
     }
-    @PutMapping("/update")
-    public ResponseEntity<UserResponse> updateUser(@AuthenticationPrincipal UserDetails userDetails) {
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateCurrentUser(@Valid @RequestBody UserUpdateDto userUpdateDto, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.authUser(userDetails);
+        user = userService.updateUser(userUpdateDto, user);
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
+    }
+    @PutMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<UserResponse> updateUserByAdmin(
+            @PathVariable String id, // Get the ID from the URL path
+            @Valid @RequestBody UserUpdateByAdminDto userUpdateByAdminDto) {
 
-        return ResponseEntity.ok("information updated: " + UserResponse.fromEntity(user));
+        // The service method now takes the ID from the path
+        User updatedUser = userService.updateUserByAdmin(id, userUpdateByAdminDto);
+        return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
     }
 
 }

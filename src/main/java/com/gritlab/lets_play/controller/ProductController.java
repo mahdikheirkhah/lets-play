@@ -1,8 +1,6 @@
 package com.gritlab.lets_play.controller;
 
-import com.gritlab.lets_play.model.Product;
-import com.gritlab.lets_play.model.ProductDto;
-import com.gritlab.lets_play.model.User;
+import com.gritlab.lets_play.model.*;
 import com.gritlab.lets_play.repository.UserRepository;
 import com.gritlab.lets_play.service.ProductService;
 import com.gritlab.lets_play.service.UserService;
@@ -10,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -29,9 +28,8 @@ public class ProductController {
         this.productService = productService;
         this.userService = userService; // Add this
     }
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<ProductDto>> getAllProducts() {
-        // Hardcoded list for testing
         List<Product> products = productService.getProducts();
         List<ProductDto> productDos = products.stream()
                 .map(ProductDto::fromEntity)
@@ -39,11 +37,20 @@ public class ProductController {
 
         return ResponseEntity.ok(productDos);
     }
-    // Inside ProductController.java
-    @PostMapping
+    @GetMapping("/myProduct")
+    public ResponseEntity<List<ProductDto>> getAllMyProducts(@AuthenticationPrincipal UserDetails userDetails) {
+        User owner = userService.authUser(userDetails);
+        List<Product> products = productService.getProducts(owner.getId());
+        List<ProductDto> productDos = products.stream()
+                .map(ProductDto::fromEntity)
+                .toList();
+
+        return ResponseEntity.ok(productDos);
+    }
+    @PostMapping("/create")
     public ResponseEntity<ProductDto> addProduct(
             @Valid @RequestBody ProductDto productRequest,
-            @AuthenticationPrincipal UserDetails userDetails) { // <-- Use @AuthenticationPrincipal
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         User owner = userService.authUser(userDetails);
         Product product = ProductDto.toEntity(productRequest);
@@ -53,4 +60,20 @@ public class ProductController {
 
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
+    @PutMapping("/product/{id}")
+    public ResponseEntity<ProductDto> updateProduct(@PathVariable String id,@Valid @RequestBody ProductUpdateDto productUpdateDto, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.authUser(userDetails);
+        Product product = productService.updateProduct(id, productUpdateDto, user);
+        return ResponseEntity.ok(ProductDto.fromEntity(product));
+    }
+    @PutMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<ProductDto> updateProductByAdmin(
+            @PathVariable String id,
+            @Valid @RequestBody ProductUpdateByAdminDto productUpdateByAdminDto) {
+
+        Product product = productService.updateProductByAdmin(id, productUpdateByAdminDto);
+        return ResponseEntity.ok(ProductDto.fromEntity(product));
+    }
+
 }

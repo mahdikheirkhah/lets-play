@@ -1,8 +1,10 @@
 package com.gritlab.lets_play.service;
 
 import com.gritlab.lets_play.exception.ResourceNotFoundException;
+import com.gritlab.lets_play.exception.BadRequestException;
 import com.gritlab.lets_play.model.Role;
 import com.gritlab.lets_play.model.User;
+import com.gritlab.lets_play.model.UserUpdateByAdminDto;
 import com.gritlab.lets_play.model.UserUpdateDto;
 import com.gritlab.lets_play.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +16,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.AccessDeniedException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -86,25 +88,59 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found in database"));
     }
 
-    public boolean adminCheck(UserDetails currentUser){
-        return currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ADMIN.name()));
+//    public boolean adminCheck(UserDetails currentUser){
+//        return currentUser.getAuthorities().stream()
+//                .anyMatch(a -> a.getAuthority().equals(Role.ADMIN.name()));
+//    }
+
+    public boolean isEmailAvailable(String newEmail, String currentUserId) {
+        Optional<User> userWithNewEmail = userRepository.findByEmail(newEmail);
+
+        if (userWithNewEmail.isEmpty()) {
+            return true;
+        }
+
+        return userWithNewEmail.get().getId().equals(currentUserId);
+    }
+    public User updateUser(UserUpdateDto userUpdateDto, User currentUser) {
+        if (userUpdateDto.getName() != null && !userUpdateDto.getName().isBlank()) {
+            currentUser.setName(userUpdateDto.getName());
+        }
+
+        if (userUpdateDto.getPassword() != null && !userUpdateDto.getPassword().isBlank()) {
+            String hashedPassword = passwordEncoder.encode(userUpdateDto.getPassword());
+            currentUser.setPassword(hashedPassword);
+        }
+
+        if (userUpdateDto.getEmail() != null && !userUpdateDto.getEmail().isBlank()) {
+            String newEmail = userUpdateDto.getEmail();
+
+            // Check if the new email is already taken by ANOTHER user.
+            Optional<User> userWithNewEmail = userRepository.findByEmail(newEmail);
+
+            if (userWithNewEmail.isPresent() && !userWithNewEmail.get().getId().equals(currentUser.getId())) {
+                throw new BadRequestException("The email '" + newEmail + "' is already taken.");
+            }
+            currentUser.setEmail(newEmail);
+        }
+
+        return userRepository.save(currentUser);
     }
 
-public User updateUser(User userToUpdate, UserUpdateDto userUpdateDto, UserDetails currentUser) {
-        boolean isAdmin = adminCheck(currentUser);
+    public User updateUserByAdmin(String ID, UserUpdateByAdminDto updateDto) {
+        User userToUpdate = userRepository.findById(ID)
+                    .orElseThrow(() -> new BadRequestException("No user found with ID: " + ID ));
 
-        if (userToUpdate != null && !userToUpdate.getEmail().equals(currentUser.getUsername()) && !isAdmin) {
-            throw new AccessDeniedException("You do not have permission to update this user.");
+        if (updateDto.getName() != null && !updateDto.getName().isBlank()) {
+            userToUpdate.setName(updateDto.getName());
         }
-        if (isAdmin) {
-           if (userUpdateDto == null || userUpdateDto.getEmail().isBlank() || userRepository.findByEmail(userUpdateDto.getEmail()).isEmpty()){
-               throw new ResourceNotFoundException("Admin please provide a related email to find the specific user");
-           }
-
+        if (updateDto.getEmail() != null && !updateDto.getEmail().isBlank()) {
+            userToUpdate.setEmail(updateDto.getEmail());
+        }
+        if (updateDto.getRole() != null) {
+            userToUpdate.setRole(updateDto.getRole());
         }
 
-
-        // ... proceed with update logic
+        return userRepository.save(userToUpdate);
     }
 }
