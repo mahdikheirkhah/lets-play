@@ -10,9 +10,6 @@ public class UserResponse {
     private String name;
 
     @NotBlank
-    private String Id;
-
-    @NotBlank
     private Role role;
 
     @NotBlank
@@ -23,7 +20,6 @@ public class UserResponse {
         UserResponse dto = new UserResponse();
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
-        dto.setId(user.getId());
         dto.setRole(user.getRole());
         return dto;
     }

@@ -43,7 +43,7 @@ public class UserController {
 
         return ResponseEntity.ok(userResponses);
     }
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<UserResponse> getSpecificUsersWithID(@Valid @PathVariable String id) {
         User user = userService.getUserById(id);
@@ -51,7 +51,7 @@ public class UserController {
         return ResponseEntity.ok(userResponses);
     }
 
-    @GetMapping("/{email}")
+    @GetMapping("/email/{email}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<UserResponse> getSpecificUsersWithEmail(@Valid @PathVariable String email) {
         User user = userService.getUserByEmail(email);
@@ -68,16 +68,13 @@ public class UserController {
     public ResponseEntity<UserUpdateDto> updateCurrentUser(
             @Valid @RequestBody UserUpdateDto userUpdateDto,
             @AuthenticationPrincipal UserDetails userDetails,
-            HttpServletResponse response) { // <-- Inject HttpServletResponse
+            HttpServletResponse response) {
 
         User currentUser = userService.authUser(userDetails);
 
-        // 1. Call the updated service method
         UserService.UserUpdateResult result = userService.updateUser(userUpdateDto, currentUser);
 
-        // 2. Check if a new token is needed
         if (result.tokenInvalidated()) {
-            // 3. Generate a new token
             String newToken = jwtService.generateToken(result.updatedUser());
 
             // 4. Create and set the new cookie, overwriting the old one
@@ -89,16 +86,13 @@ public class UserController {
             response.addCookie(cookie);
         }
 
-        // 5. Return only the updated user data in the response body
         return ResponseEntity.ok(UserUpdateDto.fromEntity(result.updatedUser()));
     }
     @PutMapping("/admin/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<UserResponse> updateUserByAdmin(
-            @PathVariable String id, // Get the ID from the URL path
+            @PathVariable String id,
             @Valid @RequestBody UserUpdateByAdminDto userUpdateByAdminDto) {
-
-        // The service method now takes the ID from the path
         User updatedUser = userService.updateUserByAdmin(id, userUpdateByAdminDto);
         return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
     }
@@ -107,9 +101,11 @@ public class UserController {
      */
     // DELETE /api/users/me
     @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteCurrentUserAccount(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> deleteCurrentUserAccount(@AuthenticationPrincipal UserDetails userDetails, HttpServletResponse response) {
         User currentUser = userService.authUser(userDetails); // Assuming you have this helper
         userService.deleteCurrentUser(currentUser);
+        Cookie cookie = JwtService.createCookie(null, 0);
+        response.addCookie(cookie);
         return ResponseEntity.noContent().build(); // Return 204 No Content
     }
 
@@ -123,5 +119,12 @@ public class UserController {
         userService.deleteUserByAdmin(id);
         return ResponseEntity.noContent().build(); // Return 204 No Content
     }
+    @PostMapping("/admin")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<String> registerByAdmin(@Valid @RequestBody UserRegisterByAdminDto registerRequest,  HttpServletResponse response) {
 
+        User newUser = UserRegisterByAdminDto.toEntity(registerRequest);
+        User savedUser = userService.registerUserByAdmin(newUser);
+        return ResponseEntity.ok("user with email: " + savedUser.getEmail() + " successfully registered");
+    }
 }

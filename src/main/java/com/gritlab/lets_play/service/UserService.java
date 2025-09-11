@@ -32,21 +32,25 @@ public class UserService implements UserDetailsService {
     }
 
     public User registerUser(User user) {
-        // 1. Check if a user with this email already exists
         userRepository.findByEmail(user.getEmail()).ifPresent(existingUser -> {
             throw new IllegalStateException("Email already in use: " + user.getEmail());
         });
 
-        // 2. Hash the password before saving
+        String hashedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(hashedPassword);
+        if(user.getRole() == null){
+            user.setRole(Role.USER);
+        }
+        return userRepository.save(user);
+    }
+    public User registerUserByAdmin(User user) {
+        userRepository.findByEmail(user.getEmail()).ifPresent(existingUser -> {
+            throw new IllegalStateException("Email already in use: " + user.getEmail());
+        });
+
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(hashedPassword);
 
-        // 3. Set a default role if one isn't provided (the safe way)
-        if (user.getRole() == null) {
-            user.setRole(Role.USER);
-        }
-
-        // 4. Save the new user to the database
         return userRepository.save(user);
     }
     @Override
@@ -56,18 +60,16 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
     public User getUserById(String id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));

@@ -45,54 +45,26 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
         User user = (User) authentication.getPrincipal();
         String jwtToken = jwtService.generateToken(user);
-
-        // --- Create the Cookie ---
-        Cookie cookie = new Cookie("jwt-token", jwtToken);
-        cookie.setHttpOnly(true); // Makes it inaccessible to JavaScript
-        cookie.setSecure(true); // Sent only over HTTPS (for production)
-        cookie.setPath("/"); // Accessible from all paths
-        cookie.setMaxAge(24 * 60 * 60); // 24 hours, same as token expiration
-        // Consider setting SameSite attribute for CSRF protection
-        //cookie.setSameSite("Strict");
-
-        response.addCookie(cookie); // Add the cookie to the HTTP response
-
-        // The response body now only needs the user data
+        Cookie cookie = JwtService.createCookie(jwtToken, 24*60*60);
+        response.addCookie(cookie);
         return ResponseEntity.ok("user with email: " + user.getEmail() + " successfully logged in");
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody UserDto registerRequest) {
+    public ResponseEntity<String> register(@Valid @RequestBody UserDto registerRequest,  HttpServletResponse response) {
 
-        User newUser = new User();
-        newUser.setEmail(registerRequest.getEmail());
-        newUser.setPassword(registerRequest.getPassword());
-        newUser.setName(registerRequest.getName());
-        newUser.setRole(Role.USER);
+        User newUser = UserDto.toEntity(registerRequest);
         User savedUser = userService.registerUser(newUser);
-
-        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-                savedUser.getEmail(),
-                savedUser.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority(savedUser.getRole().name()))
-        );
-        final String jwt = jwtService.generateToken(userDetails);
-
-        // Return the token in the response
-        return ResponseEntity.ok(jwt);
+        final String jwtToken = jwtService.generateToken(savedUser);
+        Cookie cookie = JwtService.createCookie(jwtToken, 24*60*60);
+        response.addCookie(cookie);
+        return ResponseEntity.ok("user with email: " + savedUser.getEmail() + " successfully registered and logged in");
     }
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletResponse response) {
-        // Create a cookie that expires immediately
-        Cookie cookie = new Cookie("jwt-token", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // This tells the browser to delete the cookie
-
+        Cookie cookie = JwtService.createCookie(null, 0);
         response.addCookie(cookie);
         return ResponseEntity.ok("Logout successful");
     }

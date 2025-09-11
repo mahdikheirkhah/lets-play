@@ -21,13 +21,16 @@ import org.springframework.security.core.userdetails.UserDetailsService; // Corr
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import io.jsonwebtoken.ExpiredJwtException; // <-- Add this import
+import org.slf4j.Logger; // <-- Add this import
+import org.slf4j.LoggerFactory; // <-- Add this import
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtService jwtService;
-
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     // Inject the UserDetailsService interface, not your UserService class
     @Autowired
     private UserDetailsService userDetailsService;
@@ -41,7 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = null;
 
-        // --- Extract token from cookie ---
         if (request.getCookies() != null) {
             jwt = Arrays.stream(request.getCookies())
                     .filter(cookie -> cookie.getName().equals("jwt-token"))
@@ -55,17 +57,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // --- The rest of the filter logic is the same ---
-        final String userEmail = jwtService.extractUsername(jwt);
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        try {
+            final String userEmail = jwtService.extractUsername(jwt);
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (ExpiredJwtException e) {
+            // This is the key change. If the token is expired, we log it and continue.
+            // The user will be treated as unauthenticated.
+            logger.warn("JWT token is expired: {}", e.getMessage());
         }
+
         filterChain.doFilter(request, response);
     }
 }

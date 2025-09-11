@@ -7,6 +7,7 @@ import com.gritlab.lets_play.repository.UserRepository;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import com.gritlab.lets_play.repository.ProductRepository;
@@ -33,6 +34,12 @@ public class ProductService {
     public Product registerProduct(Product product, String ownerId) {
         product.setUserId(ownerId);
         return productRepository.save(product);
+    }
+    @PostAuthorize("returnObject.userId == principal.id")
+    public Product getProductById(String productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + productId));
+        return product;
     }
     public Product updateProduct(String productID,ProductUpdateDto productUpdateDto, User currentUser) {
         Product product = productRepository.findById(productID).orElseThrow(() ->new BadRequestException("product with this ID " + productID + "is not in the database"));
@@ -83,7 +90,6 @@ public class ProductService {
         productRepository.deleteById(productId);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
     public void deleteProductByAdmin(String productId) {
         if (!productRepository.existsById(productId)) {
             throw new ResourceNotFoundException("Product not found with ID: " + productId);

@@ -6,7 +6,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class UserDto {
+public class UserRegisterByAdminDto {
+    private Role role;
     @NotBlank
     private String name;
 
@@ -17,12 +18,13 @@ public class UserDto {
     @NotBlank
     @Size(min = 8)
     private String password;
-    public static User toEntity(UserDto userDto) {
+    public static User toEntity(UserRegisterByAdminDto userDto) {
         User user = new User();
         user.setName(userDto.getName());
         user.setEmail(userDto.getEmail());
         user.setPassword(userDto.getPassword());
-        user.setRole(Role.USER);
+        user.setRole(userDto.getRole());
         return user;
     }
+
 }

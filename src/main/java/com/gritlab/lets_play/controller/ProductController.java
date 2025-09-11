@@ -24,7 +24,7 @@ public class ProductController {
     private final UserService userService; // Add this
 
     @Autowired
-    public ProductController(ProductService productService, UserService userService) { // Add to constructor
+    public ProductController(ProductService productService, UserService userService) {
         this.productService = productService;
         this.userService = userService; // Add this
     }
@@ -36,6 +36,11 @@ public class ProductController {
                 .toList();
 
         return ResponseEntity.ok(productDos);
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable String id) {
+        Product product = productService.getProductById(id);
+        return ResponseEntity.ok(ProductDto.fromEntity(product));
     }
     @GetMapping("/me")
     public ResponseEntity<List<ProductDto>> getAllMyProducts(@AuthenticationPrincipal UserDetails userDetails) {
@@ -75,8 +80,6 @@ public class ProductController {
         Product product = productService.updateProductByAdmin(id, productUpdateByAdminDto);
         return ResponseEntity.ok(ProductDto.fromEntity(product));
     }
-    // Endpoint for a user to delete their own product
-    // DELETE /api/products/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable String id,
