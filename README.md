@@ -107,7 +107,9 @@ java -jar target/lets-play-0.0.1-SNAPSHOT.jar
 The application is running successfully when you see the following lines in your console:
 
 ```bash   
-...  Tomcat started on port(s): 8080 (http) with context path ''  ...  Started LetsPlayApplication in X.XXX seconds  ...  ✅ Dummy data inserted!   
+...  Tomcat started on port(s): 8080 (http) with context path ''  ...
+Started LetsPlayApplication in X.XXX seconds  ...
+✅ Dummy data inserted!   
 ```
 
 The API is now running and ready to accept requests at http://localhost:8080.
