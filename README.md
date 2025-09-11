@@ -1,69 +1,86 @@
-## Let's Play
+Let's Play API
+==============
 
-### Objectives
+1\. Project Overview
+--------------------
 
-You will be developing a basic CRUD (Create, Read, Update, Delete) API using Spring Boot with MongoDB, and it should adhere to RESTful principles. The application will contain user management and product management functionalities.
+This project is a complete RESTful CRUD (Create, Read, Update, Delete) API built with **Spring Boot** and **MongoDB**. It provides functionalities for managing users and products, secured with a robust, token-based authentication and authorization system using JWTs stored in HttpOnly cookies.
 
-### Instructions
+The API adheres to modern best practices, including role-based access control (User vs. Admin), global exception handling, input validation, and secure password management. It also includes bonus features like rate limiting to protect against abuse.
 
-#### 1. Database Design
+### Key Features
 
-```mermaid
-classDiagram
-    User "1" -- "n" Product : Owns
-    User : +String id
-    User : +String name
-    User : +String email
-    User : +String password
-    User : +String role
-    Product : +String id
-    Product : +String name
-    Product : +String description
-    Product : +Double price
-    Product : +String userId
-```
+*   **User Management:** Full CRUD operations for users.
+    
+*   **Product Management:** Full CRUD operations for products, with ownership checks.
+    
+*   **Authentication:** JWT-based login/logout system using secure, HttpOnly cookies.
+    
+*   **Authorization:** Role-based access control (USER, ADMIN) and ownership-based permissions.
+    
+*   **Security:** Password hashing (BCrypt), input validation, DTOs to prevent data leakage, and rate limiting.
+    
+*   **Error Handling:** A global exception handler that returns appropriate HTTP status codes and prevents 5XX errors.
+    
 
-#### 2. API Development
+2\. Project Structure
+---------------------
 
-You should provide a set of RESTful APIs to perform CRUD operations on both Users and Products. The APIs should be designed according to the REST standard. The "GET Products" API should be accessible without authentication.
+The project follows a standard layered architecture to ensure a clean separation of concerns.
 
-#### 3. Authentication & Authorization
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   src  └── main      └── java          └── com              └── gritlab                  └── lets_play                      ├── LetsPlayApplication.java    // Main application entry point                      ├── config/                     // Security, beans, and other configurations                      ├── controller/                 // API endpoints (REST controllers)                      ├── dto/                        // Data Transfer Objects for API requests/responses                      ├── exception/                  // Custom exception classes                      ├── model/                      // MongoDB document models and enums                      ├── repository/                 // Spring Data MongoDB repositories                      └── service/                    // Business logic and service layer   `
 
-Implement a token-based authentication system. Only authenticated users can access the APIs. The users can have different roles (admin or user), and the API access should be controlled based on the user roles.
+3\. Prerequisites
+-----------------
 
-> 💡 Spring Security 
+Before you begin, ensure you have the following software installed on your system:
 
-#### 4. Error Handling
+*   **Java (JDK):** Version 21 or higher.
+    
+*   **Apache Maven:** Version 3.8.x or higher.
+    
+*   **MongoDB:** MongoDB Community Edition, running on the default port (27017).
+    
+*   **An API Client:** [Postman](https://www.postman.com/) or a similar tool for testing the API endpoints.
+    
 
-The API should not return any 5XX errors. You should handle any possible exceptions and return appropriate HTTP response codes and messages.
+4\. How to Run the Project
+--------------------------
 
-#### 5. Security Measures
+Follow these steps to get the application up and running.
 
-Implement the following security measures:
+### Step 1: Clone the Repository
 
-- Hash and salt passwords before storing them in the database.
-- Validate inputs to prevent MongoDB injection attacks.
-- Protect sensitive user information. Don't return passwords or other sensitive information in your API responses.
-- Use HTTPS to protect data in transit.
+Clone this project to your local machine using your preferred method.
 
-### Bonus 
+### Step 2: Configure the Application
 
-As an additional challenge, you could consider implementing the following features. Note that these are not required for the completion of the project but would provide additional learning opportunities:
+Navigate to src/main/resources/ and open the application.properties file. Ensure the following properties are set correctly for your environment:
 
-- **Set appropriate CORS policies:** Implement Cross-Origin Resource Sharing (CORS) policies to manage the security of your application when it is accessed from different domains.
-- **Implement rate limiting to prevent brute force attacks:** Use rate limiting to restrict the number of API requests a client can make in a given time. This can help prevent attacks and misuse of your application.
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # MongoDB Connection  # (Update this if your database has a different name or requires credentials)  spring.data.mongodb.uri=mongodb://localhost:27017/lets-play-db  # JWT Secret Key  # IMPORTANT: Replace this with your own strong, randomly generated Base64 key.  application.security.jwt.secret-key=bXlWZXJ5U2VjdXJlS2V5Rm9ySldUU2lnbmluZzEyMzQ1Njc4OThhYmNkZWZnaGlqa2xtbm9wcXJz   `
 
-### Testing
+### Step 3: Build the Project with Maven
 
-Your project will be extensively tested for the following aspects:
+Open a terminal or command prompt in the root directory of the project and run the following Maven command. This will compile the code, run all tests, and package the application into a .jar file.
 
-- Correctness of the APIs.
-- Proper implementation of authentication and authorization.
-- The absence of 5XX errors.
-- Implementation of the above-mentioned security measures.
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   mvn clean install   `
 
-In order for auditors to test your program, you will have to run your project using a code editor or provide a script to run it.
+### Step 4: Run the Application
 
-### Resources
-[Spring initializer](https://start.spring.io/)
-[Rest Documentation](https://docs.github.com/en/rest?apiVersion=2022-11-28)
+Once the build is successful, you can run the application in one of two ways:
+
+**A) From the Command Line:**Navigate to the target directory and run the generated .jar file.
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   java -jar target/lets-play-0.0.1-SNAPSHOT.jar   `
+
+**B) From Your IDE (e.g., IntelliJ IDEA):**Simply find the LetsPlayApplication.java file and run its main() method.
+
+### Step 5: Confirmation
+
+The application is running successfully when you see the following lines in your console:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   ...  Tomcat started on port(s): 8080 (http) with context path ''  ...  Started LetsPlayApplication in X.XXX seconds  ...  ✅ Dummy data inserted!   `
+
+The API is now running and ready to accept requests at http://localhost:8080.
+
+You can now use Postman or another API client to interact with the endpoints.
