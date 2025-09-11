@@ -28,7 +28,22 @@ The API adheres to modern best practices, including role-based access control (U
 
 The project follows a standard layered architecture to ensure a clean separation of concerns.
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   src  └── main      └── java          └── com              └── gritlab                  └── lets_play                      ├── LetsPlayApplication.java    // Main application entry point                      ├── config/                     // Security, beans, and other configurations                      ├── controller/                 // API endpoints (REST controllers)                      ├── dto/                        // Data Transfer Objects for API requests/responses                      ├── exception/                  // Custom exception classes                      ├── model/                      // MongoDB document models and enums                      ├── repository/                 // Spring Data MongoDB repositories                      └── service/                    // Business logic and service layer   `
+```
+src
+└── main
+    └── java
+        └── com
+            └── gritlab
+                └── lets_play
+                    ├── LetsPlayApplication.java    // Main application entry point
+                    ├── config/                     // Security, beans, and other configurations
+                    ├── controller/                 // API endpoints (REST controllers)
+                    ├── dto/                        // Data Transfer Objects for API requests/responses
+                    ├── exception/                  // Custom exception classes
+                    ├── model/                      // MongoDB document models and enums
+                    ├── repository/                 // Spring Data MongoDB repositories
+                    └── service/                    // Business logic and service layer
+```
 
 3\. Prerequisites
 -----------------
@@ -57,13 +72,23 @@ Clone this project to your local machine using your preferred method.
 
 Navigate to src/main/resources/ and open the application.properties file. Ensure the following properties are set correctly for your environment:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # MongoDB Connection  # (Update this if your database has a different name or requires credentials)  spring.data.mongodb.uri=mongodb://localhost:27017/lets-play-db  # JWT Secret Key  # IMPORTANT: Replace this with your own strong, randomly generated Base64 key.  application.security.jwt.secret-key=bXlWZXJ5U2VjdXJlS2V5Rm9ySldUU2lnbmluZzEyMzQ1Njc4OThhYmNkZWZnaGlqa2xtbm9wcXJz   `
+```bash
+# MongoDB Connection
+# (Update this if your database has a different name or requires credentials)
+spring.data.mongodb.uri=mongodb://localhost:27017/lets-play-db
+
+# JWT Secret Key
+# IMPORTANT: Replace this with your own strong, randomly generated Base64 key.
+application.security.jwt.secret-key=bXlWZXJ5U2VjdXJlS2V5Rm9ySldUU2lnbmluZzEyMzQ1Njc4OThhYmNkZWZnaGlqa2xtbm9wcXJz
+```
 
 ### Step 3: Build the Project with Maven
 
 Open a terminal or command prompt in the root directory of the project and run the following Maven command. This will compile the code, run all tests, and package the application into a .jar file.
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   mvn clean install   `
+```bash
+mvn clean install   
+```
 
 ### Step 4: Run the Application
 
@@ -71,7 +96,9 @@ Once the build is successful, you can run the application in one of two ways:
 
 **A) From the Command Line:**Navigate to the target directory and run the generated .jar file.
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   java -jar target/lets-play-0.0.1-SNAPSHOT.jar   `
+```bash  
+java -jar target/lets-play-0.0.1-SNAPSHOT.jar
+```
 
 **B) From Your IDE (e.g., IntelliJ IDEA):**Simply find the LetsPlayApplication.java file and run its main() method.
 
@@ -79,7 +106,9 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
 
 The application is running successfully when you see the following lines in your console:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   ...  Tomcat started on port(s): 8080 (http) with context path ''  ...  Started LetsPlayApplication in X.XXX seconds  ...  ✅ Dummy data inserted!   `
+```bash   
+...  Tomcat started on port(s): 8080 (http) with context path ''  ...  Started LetsPlayApplication in X.XXX seconds  ...  ✅ Dummy data inserted!   
+```
 
 The API is now running and ready to accept requests at http://localhost:8080.
 
