@@ -3,20 +3,23 @@ package com.gritlab.lets_play.controller;
 import com.gritlab.lets_play.model.*;
 import com.gritlab.lets_play.service.JwtService;
 import com.gritlab.lets_play.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import jakarta.servlet.http.Cookie;
 import java.util.Collections;
 
 // In a new controller, e.g., AuthController.java
@@ -37,21 +40,28 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody AuthRequest authRequest) {
-        // Authenticate the user. If credentials are bad, this throws an exception.
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        authRequest.getEmail(),
-                        authRequest.getPassword()
-                )
+    public ResponseEntity<String> login(@RequestBody AuthRequest authRequest, HttpServletResponse response) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
         );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // If authentication is successful, generate a token
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
-        final String jwt = jwtService.generateToken(userDetails);
+        User user = (User) authentication.getPrincipal();
+        String jwtToken = jwtService.generateToken(user);
 
-        // Return the token in the response
-        return ResponseEntity.ok(jwt);
+        // --- Create the Cookie ---
+        Cookie cookie = new Cookie("jwt-token", jwtToken);
+        cookie.setHttpOnly(true); // Makes it inaccessible to JavaScript
+        cookie.setSecure(true); // Sent only over HTTPS (for production)
+        cookie.setPath("/"); // Accessible from all paths
+        cookie.setMaxAge(24 * 60 * 60); // 24 hours, same as token expiration
+        // Consider setting SameSite attribute for CSRF protection
+        //cookie.setSameSite("Strict");
+
+        response.addCookie(cookie); // Add the cookie to the HTTP response
+
+        // The response body now only needs the user data
+        return ResponseEntity.ok("user with email: " + user.getEmail() + " successfully logged in");
     }
 
     @PostMapping("/register")
@@ -73,5 +83,17 @@ public class AuthController {
 
         // Return the token in the response
         return ResponseEntity.ok(jwt);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletResponse response) {
+        // Create a cookie that expires immediately
+        Cookie cookie = new Cookie("jwt-token", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // This tells the browser to delete the cookie
+
+        response.addCookie(cookie);
+        return ResponseEntity.ok("Logout successful");
     }
 }

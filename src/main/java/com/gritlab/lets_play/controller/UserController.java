@@ -2,17 +2,20 @@ package com.gritlab.lets_play.controller;
 
 import com.gritlab.lets_play.model.*;
 import com.gritlab.lets_play.repository.UserRepository;
+import com.gritlab.lets_play.service.JwtService;
 import com.gritlab.lets_play.service.ProductService;
 import com.gritlab.lets_play.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,10 +25,11 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserService userService;
-
+    private final JwtService jwtService;
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, JwtService jwtService) {
         this.userService = userService;
+        this.jwtService = jwtService;
     }
 
     @GetMapping
@@ -61,10 +65,32 @@ public class UserController {
         return ResponseEntity.ok(UserResponse.fromEntity(user));
     }
     @PutMapping("/me")
-    public ResponseEntity<UserResponse> updateCurrentUser(@Valid @RequestBody UserUpdateDto userUpdateDto, @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userService.authUser(userDetails);
-        user = userService.updateUser(userUpdateDto, user);
-        return ResponseEntity.ok(UserResponse.fromEntity(user));
+    public ResponseEntity<UserUpdateDto> updateCurrentUser(
+            @Valid @RequestBody UserUpdateDto userUpdateDto,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletResponse response) { // <-- Inject HttpServletResponse
+
+        User currentUser = userService.authUser(userDetails);
+
+        // 1. Call the updated service method
+        UserService.UserUpdateResult result = userService.updateUser(userUpdateDto, currentUser);
+
+        // 2. Check if a new token is needed
+        if (result.tokenInvalidated()) {
+            // 3. Generate a new token
+            String newToken = jwtService.generateToken(result.updatedUser());
+
+            // 4. Create and set the new cookie, overwriting the old one
+            Cookie cookie = new Cookie("jwt-token", newToken);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(24 * 60 * 60); // 24 hours
+            response.addCookie(cookie);
+        }
+
+        // 5. Return only the updated user data in the response body
+        return ResponseEntity.ok(UserUpdateDto.fromEntity(result.updatedUser()));
     }
     @PutMapping("/admin/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")

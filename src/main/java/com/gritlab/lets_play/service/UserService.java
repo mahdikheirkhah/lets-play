@@ -51,16 +51,9 @@ public class UserService implements UserDetailsService {
     }
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // Find your custom User entity from the database
-        User user = userRepository.findByEmail(email)
+        // This returns your actual User object, which is also a UserDetails
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-
-        // Convert your User entity into a Spring Security UserDetails object
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()))
-        );
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -101,30 +94,7 @@ public class UserService implements UserDetailsService {
 
         return userWithNewEmail.get().getId().equals(currentUserId);
     }
-    public User updateUser(UserUpdateDto userUpdateDto, User currentUser) {
-        if (userUpdateDto.getName() != null && !userUpdateDto.getName().isBlank()) {
-            currentUser.setName(userUpdateDto.getName());
-        }
 
-        if (userUpdateDto.getPassword() != null && !userUpdateDto.getPassword().isBlank()) {
-            String hashedPassword = passwordEncoder.encode(userUpdateDto.getPassword());
-            currentUser.setPassword(hashedPassword);
-        }
-
-        if (userUpdateDto.getEmail() != null && !userUpdateDto.getEmail().isBlank()) {
-            String newEmail = userUpdateDto.getEmail();
-
-            // Check if the new email is already taken by ANOTHER user.
-            Optional<User> userWithNewEmail = userRepository.findByEmail(newEmail);
-
-            if (userWithNewEmail.isPresent() && !userWithNewEmail.get().getId().equals(currentUser.getId())) {
-                throw new BadRequestException("The email '" + newEmail + "' is already taken.");
-            }
-            currentUser.setEmail(newEmail);
-        }
-
-        return userRepository.save(currentUser);
-    }
 
     public User updateUserByAdmin(String ID, UserUpdateByAdminDto updateDto) {
         User userToUpdate = userRepository.findById(ID)
@@ -174,5 +144,33 @@ public class UserService implements UserDetailsService {
         }
 
         userRepository.deleteById(userIdToDelete);
+    }
+    public record UserUpdateResult(User updatedUser, boolean tokenInvalidated) {}
+
+    public UserUpdateResult updateUser(UserUpdateDto userUpdateDto, User currentUser) {
+        boolean tokenInvalidated = false;
+
+        if (userUpdateDto.getName() != null && !userUpdateDto.getName().isBlank()) {
+            currentUser.setName(userUpdateDto.getName());
+        }
+
+        if (userUpdateDto.getPassword() != null && !userUpdateDto.getPassword().isBlank()) {
+            String hashedPassword = passwordEncoder.encode(userUpdateDto.getPassword());
+            currentUser.setPassword(hashedPassword);
+            tokenInvalidated = true; // Password change invalidates old token
+        }
+
+        if (userUpdateDto.getEmail() != null && !userUpdateDto.getEmail().isBlank() && !userUpdateDto.getEmail().equals(currentUser.getEmail())) {
+            // Check if the new email is already taken by ANOTHER user.
+            Optional<User> userWithNewEmail = userRepository.findByEmail(userUpdateDto.getEmail());
+            if (userWithNewEmail.isPresent()) {
+                throw new BadRequestException("The email '" + userUpdateDto.getEmail() + "' is already taken.");
+            }
+            currentUser.setEmail(userUpdateDto.getEmail());
+            tokenInvalidated = true; // Email change invalidates old token
+        }
+
+        User savedUser = userRepository.save(currentUser);
+        return new UserUpdateResult(savedUser, tokenInvalidated);
     }
 }

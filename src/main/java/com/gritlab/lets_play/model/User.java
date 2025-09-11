@@ -6,10 +6,16 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.Collections;
 
 @Data
 @Document(collection = "users")
-public class User {
+public class User implements UserDetails {
     @Id
     private String id;
 
@@ -27,5 +33,39 @@ public class User {
 
     @NotBlank
     private Role role;
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority(role.name()));
+    }
+
+    @Override
+    public String getUsername() {
+        // We are using email as the unique identifier (username)
+        return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        // For this simple case, we'll say accounts never expire
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        // Accounts are never locked
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        // Credentials (password) never expire
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        // Accounts are always enabled
+        return true;
+    }
 
 }

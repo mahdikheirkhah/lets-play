@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class ProductDto {
+    private String id;
     @NotBlank(message = "Name cannot be empty")
     private String name;
     private String description;
@@ -16,6 +17,7 @@ public class ProductDto {
         dto.setName(product.getName());
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
+        dto.setId(product.getId());
         return dto;
     }
     public static Product toEntity(ProductDto productDto){

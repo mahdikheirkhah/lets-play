@@ -5,8 +5,11 @@ import com.gritlab.lets_play.service.JwtService;
 import com.gritlab.lets_play.service.UserService;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
+import java.util.Arrays;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,22 +39,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
+        String jwt = null;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // --- Extract token from cookie ---
+        if (request.getCookies() != null) {
+            jwt = Arrays.stream(request.getCookies())
+                    .filter(cookie -> cookie.getName().equals("jwt-token"))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
-
+        // --- The rest of the filter logic is the same ---
+        final String userEmail = jwtService.extractUsername(jwt);
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // This call will now work correctly because UserDetailsService has this method
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-
             if (jwtService.isTokenValid(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());

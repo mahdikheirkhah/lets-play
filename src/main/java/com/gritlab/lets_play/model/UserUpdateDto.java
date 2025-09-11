@@ -17,6 +17,13 @@ public class UserUpdateDto {
     @Email
     private String email;
 
+    public static UserUpdateDto fromEntity(User user) {
+        UserUpdateDto userUpdateDto = new UserUpdateDto();
+        userUpdateDto.setName(user.getName());
+        userUpdateDto.setPassword(user.getPassword());
+        userUpdateDto.setEmail(user.getEmail());
+        return userUpdateDto;
+    }
     public User toEntity() {
         User user = new User();
         user.setName(this.getName());
